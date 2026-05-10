@@ -1,0 +1,196 @@
+<!
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultimate Map Pro LEVEL 3</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: black;
+      color: white;
+    }
+
+    header {
+      padding: 10px;
+      text-align: center;
+      background: #111;
+      font-size: 18px;
+    }
+
+    #map {
+      height: 78vh;
+      width: 100%;
+    }
+
+    .panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      background: #111;
+      padding: 10px;
+    }
+
+    input {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      width: 140px;
+    }
+
+    button {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: purple;
+      color: white;
+    }
+
+    .red { background: red; }
+    .blue { background: dodgerblue; }
+    .green { background: green; }
+
+    #spots {
+      padding: 10px;
+      background: #0f0f0f;
+      max-height: 120px;
+      overflow: auto;
+      font-size: 14px;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+
+<header>🔥 Ultimate Map Pro LEVEL 3</header>
+
+<div class="panel">
+
+  <input id="start" placeholder="Start">
+  <input id="end" placeholder="Destination">
+
+  <button onclick="route()">🚗 Route</button>
+  <button class="blue" onclick="track()">📍 Track Me</button>
+  <button class="green" onclick="saveSpot()">⭐ Save Spot</button>
+  <button onclick="toggleUI()">👁 Hide UI</button>
+
+</div>
+
+<div id="map"></div>
+
+<div id="spots"></div>
+
+<!-- scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+<script>
+  const map = L.map('map').setView([26.8, 80.9], 5);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  let routeControl;
+  let userMarker;
+  let watchId;
+
+  // LIVE TRACKING
+  function track() {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+
+    watchId = navigator.geolocation.watchPosition(pos => {
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+
+      map.setView([lat, lon], 15);
+
+      if (userMarker) map.removeLayer(userMarker);
+
+      userMarker = L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup("📍 You are moving")
+        .openPopup();
+    });
+  }
+
+  // ROUTE
+  function route() {
+    let s = document.getElementById("start").value;
+    let e = document.getElementById("end").value;
+
+    if (!s || !e) return alert("Fill both fields");
+
+    Promise.all([
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${s}`).then(r => r.json()),
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${e}`).then(r => r.json())
+    ]).then(d => {
+
+      let a = d[0][0], b = d[1][0];
+      if (!a || !b) return alert("Not found");
+
+      let p1 = L.latLng(a.lat, a.lon);
+      let p2 = L.latLng(b.lat, b.lon);
+
+      if (routeControl) map.removeControl(routeControl);
+
+      routeControl = L.Routing.control({
+        waypoints: [p1, p2],
+        lineOptions: { styles: [{ color: 'cyan', weight: 5 }] }
+      }).addTo(map);
+
+      map.setView(p1, 10);
+    });
+  }
+
+  // SAVE SPOT
+  function saveSpot() {
+    let center = map.getCenter();
+    let spots = JSON.parse(localStorage.getItem("spots") || "[]");
+
+    spots.push({ lat: center.lat, lng: center.lng });
+
+    localStorage.setItem("spots", JSON.stringify(spots));
+
+    loadSpots();
+  }
+
+  // LOAD SPOTS
+  function loadSpots() {
+    let spots = JSON.parse(localStorage.getItem("spots") || "[]");
+
+    document.getElementById("spots").innerHTML = "<b>⭐ Saved Spots</b><br>";
+
+    spots.forEach((s, i) => {
+      L.marker([s.lat, s.lng]).addTo(map)
+        .bindPopup("⭐ Spot " + (i + 1));
+
+      document.getElementById("spots").innerHTML +=
+        `Spot ${i + 1}: ${s.lat.toFixed(3)}, ${s.lng.toFixed(3)}<br>`;
+    });
+  }
+
+  loadSpots();
+
+  // UI toggle
+  function toggleUI() {
+    document.querySelector('.panel').classList.toggle('hidden');
+  }
+
+</script>
+
+</body>
+</html>
