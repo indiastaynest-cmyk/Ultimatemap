@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stay India</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="roomList"></div>
+
+<h1>🏨 Stay India</h1>
+<div id="roomList"></div>
+<h2>🏠 Add Room (Owner)</h2>
+
+
+<input id="name" placeholder="Room Name">
+
+<input id="location" placeholder="Location">
+
+<input id="price" placeholder="Price">
+
+<input type="file" id="image">
+<img src="${room.image}" width="200">
+<button onclick="addRoom()">Add Room</button>
+
+<hr>
+
+<h2>🔍 Search Rooms</h2>
+<button onclick="requestBooking('${room.name}')">
+  Request Booking
+</button>
+
+<input id="searchInput"
+onkeyup="searchRooms()"
+placeholder="Search by room or location">
+
+<hr>
+
+<h2>📍 Available Rooms</h2>
+
+<div id="rooms"></div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
